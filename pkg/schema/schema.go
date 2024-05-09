@@ -41,8 +41,8 @@ type Extension struct {
 }
 
 type Branding struct {
-	Color *string `json:"color"`
-	Icon  *string `json:"icon"`
+	Color *string `yaml:"color"`
+	Icon  *string `yaml:"icon"`
 }
 
 type Input struct {

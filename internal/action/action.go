@@ -81,7 +81,7 @@ func (a *action) Contains(filename string) bool {
 }
 
 func (a *action) buildPackage() error {
-	cmd := exec.Command("pnpm", "exec", "nx", "run-many", "--target", "build")
+	cmd := exec.Command("pnpm", "exec", "nx", "run", fmt.Sprintf("%s:build", a.packageInfo.Name))
 	cmd.Dir = a.packageInfo.Path
 
 	// get relative path

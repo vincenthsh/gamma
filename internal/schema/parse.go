@@ -9,12 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/gravitational/gamma/internal/cache"
+	"github.com/gravitational/gamma/pkg/schema"
 )
 
-var configCache = cache.New[*Config]()
+var configCache = cache.New[*schema.Config]()
 
-func GetConfig(root, filename string) (*Config, error) {
-	var config CustomConfig
+func GetConfig(root, filename string) (*schema.Config, error) {
+	var config schema.CustomConfig
 
 	contents, err := os.ReadFile(filename)
 	if err != nil {
@@ -30,8 +31,8 @@ func GetConfig(root, filename string) (*Config, error) {
 	return parseCustomConfig(root, filename, config)
 }
 
-func parseCustomConfig(root, filename string, customConfig CustomConfig) (*Config, error) {
-	config := &Config{
+func parseCustomConfig(root, filename string, customConfig schema.CustomConfig) (*schema.Config, error) {
+	config := &schema.Config{
 		Path:        customConfig.Path,
 		Name:        customConfig.Name,
 		Author:      customConfig.Author,
@@ -53,7 +54,7 @@ func parseCustomConfig(root, filename string, customConfig CustomConfig) (*Confi
 				file = path.Join(filename, file)
 			}
 
-			var extensionConfig *Config
+			var extensionConfig *schema.Config
 			var ok bool
 
 			extensionConfig, ok = configCache.Get(file)
@@ -77,7 +78,7 @@ func parseCustomConfig(root, filename string, customConfig CustomConfig) (*Confi
 	return config, nil
 }
 
-func mergeConfigs(base, extension *Config, includes *[]ExtensionInclude) error {
+func mergeConfigs(base, extension *schema.Config, includes *[]schema.ExtensionInclude) error {
 	if includes != nil {
 		for _, include := range *includes {
 			field := include.Field
@@ -118,12 +119,12 @@ func mergeConfigs(base, extension *Config, includes *[]ExtensionInclude) error {
 	return nil
 }
 
-func mergeInputs(base, extension *Config, includes *ExtensionInclude) error {
+func mergeInputs(base, extension *schema.Config, includes *schema.ExtensionInclude) error {
 	if extension.Inputs == nil {
 		return fmt.Errorf("no inputs exist in %s", extension.Path)
 	}
 
-	newInputs := make(InputMap)
+	newInputs := make(schema.InputMap)
 
 	if base.Inputs != nil {
 		for key, value := range *base.Inputs {
@@ -167,12 +168,12 @@ func mergeInputs(base, extension *Config, includes *ExtensionInclude) error {
 	return nil
 }
 
-func mergeOutputs(base, extension *Config, includes *ExtensionInclude) error {
+func mergeOutputs(base, extension *schema.Config, includes *schema.ExtensionInclude) error {
 	if extension.Outputs == nil {
 		return fmt.Errorf("no outputs exist in %s", extension.Path)
 	}
 
-	newOutputs := make(OutputMap)
+	newOutputs := make(schema.OutputMap)
 
 	if base.Outputs != nil {
 		for key, value := range *base.Outputs {
@@ -216,12 +217,12 @@ func mergeOutputs(base, extension *Config, includes *ExtensionInclude) error {
 	return nil
 }
 
-func mergeBranding(base, extension *Config, includes *ExtensionInclude) error {
+func mergeBranding(base, extension *schema.Config, includes *schema.ExtensionInclude) error {
 	if extension.Branding == nil {
 		return fmt.Errorf("no branding exists in %s", extension.Path)
 	}
 
-	newBranding := &Branding{}
+	newBranding := &schema.Branding{}
 	if base.Branding != nil {
 		newBranding = base.Branding
 	}
@@ -265,7 +266,7 @@ func mergeBranding(base, extension *Config, includes *ExtensionInclude) error {
 	return nil
 }
 
-func mergeRuns(base, extension *Config) error {
+func mergeRuns(base, extension *schema.Config) error {
 	if extension.Runs.JavascriptRun == nil &&
 		extension.Runs.DockerRun == nil &&
 		extension.Runs.CompositeRun == nil {
@@ -273,19 +274,19 @@ func mergeRuns(base, extension *Config) error {
 	}
 
 	if extension.Runs.JavascriptRun != nil {
-		base.Runs = Runs{
+		base.Runs = schema.Runs{
 			JavascriptRun: extension.Runs.JavascriptRun,
 		}
 	}
 
 	if extension.Runs.DockerRun != nil {
-		base.Runs = Runs{
+		base.Runs = schema.Runs{
 			DockerRun: extension.Runs.DockerRun,
 		}
 	}
 
 	if extension.Runs.CompositeRun != nil {
-		base.Runs = Runs{
+		base.Runs = schema.Runs{
 			CompositeRun: extension.Runs.CompositeRun,
 		}
 	}
@@ -293,7 +294,7 @@ func mergeRuns(base, extension *Config) error {
 	return nil
 }
 
-func mergeAuthor(base, extension *Config) error {
+func mergeAuthor(base, extension *schema.Config) error {
 	if extension.Author == nil {
 		return fmt.Errorf("author is empty in %s", extension.Path)
 	}

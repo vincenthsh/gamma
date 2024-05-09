@@ -8,9 +8,12 @@ import (
 	"github.com/gravitational/gamma/internal/color"
 )
 
+var versionStr = "0.0.1-dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "gamma",
-	Short: "Gamma builds a monorepo of Github actions into individual repos",
+	Use:     "gamma",
+	Short:   "Gamma builds a monorepo of Github actions into individual repos",
+	Version: versionStr,
 }
 
 var gammaLogo = "\x1B[38;2;236;147;168m#\x1B[39m\x1B[38;2;226;142;179m#\x1B[39m\x1B[38;2;216;138;191m#\x1B[39m \x1B[38;2;206;133;202mG\x1B[39m\x1B[38;2;197;129;214ma\x1B[39m\x1B[38;2;187;124;225mm\x1B[39m\x1B[38;2;177;120;237mm\x1B[39m\x1B[38;2;167;115;248ma\x1B[39m \x1B[38;2;167;115;248mb\x1B[39m\x1B[38;2;160;109;244my\x1B[39m \x1B[38;2;153;104;240mT\x1B[39m\x1B[38;2;146;98;236me\x1B[39m\x1B[38;2;138;93;232ml\x1B[39m\x1B[38;2;131;87;228me\x1B[39m\x1B[38;2;124;82;225mp\x1B[39m\x1B[38;2;117;76;221mo\x1B[39m\x1B[38;2;110;70;217mr\x1B[39m\x1B[38;2;103;65;213mt\x1B[39m \x1B[38;2;95;59;209m#\x1B[39m\x1B[38;2;88;54;205m#\x1B[39m\x1B[38;2;81;48;201m#\x1B[39m"

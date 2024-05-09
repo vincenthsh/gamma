@@ -1,0 +1,15 @@
+builds:
+  - binary: gamma
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      # - linux
+    goarch:
+      - amd64
+      # - arm64
+    ldflags:
+      - "-w -s -X github.com/gravitational/gamma/cmd.versionStr={{.Version}}"
+archives:
+  - files:
+      - none* # do not include README

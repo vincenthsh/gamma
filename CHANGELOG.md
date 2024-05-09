@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/vincenthsh/gamma/compare/v1.1.0...v1.2.0) (2024-05-09)
+
+
+### Features
+
+* Use pnpm and nx for build instead of yarn ([cce72b2](https://github.com/vincenthsh/gamma/commit/cce72b24e29abb1722baba018d38f572b63d3269))
+
 ## [1.1.0](https://github.com/vincenthsh/gamma/compare/v1.0.1...v1.1.0) (2024-05-09)
 
 

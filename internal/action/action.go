@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -80,10 +81,31 @@ func (a *action) Contains(filename string) bool {
 }
 
 func (a *action) buildPackage() error {
-	cmd := exec.Command("yarn", "build")
+	cmd := exec.Command("pnpm", "exec", "nx", "run-many", "--target", "build")
 	cmd.Dir = a.packageInfo.Path
 
-	if err := cmd.Run(); err != nil {
+	// get relative path
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	relativePath, err := filepath.Rel(workingDir, a.packageInfo.Path)
+	if err != nil {
+		return err
+	}
+
+	// stream stderr/stdin
+	cmd.Stderr = os.Stderr
+	stdout, _ := cmd.StdoutPipe()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		fmt.Printf("⚡️%s: %s\n", relativePath, scanner.Text())
+	}
+
+	if err := cmd.Wait(); err != nil {
 		return err
 	}
 

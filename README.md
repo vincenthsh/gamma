@@ -1,4 +1,7 @@
-# Gamma, by [Teleport](https://goteleport.com)
+# Fork of Gamma, by [Teleport](https://goteleport.com)
+
+> [!IMPORTANT]
+> Forked to support Projen generated GH Monorepo
 
 _**G**ithub **A**ctions **M**onorepo **M**agic **A**utomation_
 
@@ -24,10 +27,16 @@ Your root `package.json` should look like:
 ```json
 {
   "name": "actions-monorepo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vincenthsh/gamma.git"
+  },
   "private": true,
-  "workspaces": [
-    "actions/*"
-  ]
+  "workspaces": {
+    "packages": [
+      "actions/foo"
+    ]
+  },
 }
 ```
 
@@ -118,4 +127,4 @@ The built source code will also be committed, so you end up with a publishable G
 
 ## Use in GitHub actions
 
-You can use this in your GitHub action workflows via [setup-gamma](https://github.com/gravitational/setup-gamma).
+You can use this in your GitHub action workflows via [setup-gamma](https://github.com/vincenthsh/setup-gamma).

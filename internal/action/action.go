@@ -42,7 +42,10 @@ type Action interface {
 }
 
 func New(config *Config) (Action, error) {
-	uri, err := url.Parse(config.PackageInfo.Repository)
+	if config.PackageInfo.Repository == nil {
+		return nil, errors.New("repository field missing in Action")
+	}
+	uri, err := url.Parse(config.PackageInfo.Repository.URL)
 	if err != nil {
 		return nil, err
 	}

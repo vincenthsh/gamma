@@ -4,3 +4,4 @@ coverage
 dist
 **/dist
 *DS_store
+/bin

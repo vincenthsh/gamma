@@ -67,13 +67,18 @@ func (s *packageService) ReadPackageInfo(filename string) (*PackageInfo, error) 
 }
 
 type PackageInfo struct {
-	Name       string     `json:"name"`
-	Version    string     `json:"version"`
-	Repository string     `json:"repository"`
-	Workspaces Workspaces `json:"workspaces"`
+	Name       string          `json:"name"`
+	Version    string          `json:"version"`
+	Repository *RepositoryInfo `json:"repository,omitempty"`
+	Workspaces Workspaces      `json:"workspaces"`
 
 	Path     string
 	RootPath string
+}
+
+type RepositoryInfo struct {
+	URL  string  `json:"url"`
+	Type *string `json:"type,omitempty"`
 }
 
 func (s *packageService) GetWorkspaces(p *PackageInfo) ([]*PackageInfo, error) {

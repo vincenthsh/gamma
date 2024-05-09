@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/vincenthsh/gamma/compare/v1.2.0...v1.2.1) (2024-05-09)
+
+
+### Bug Fixes
+
+* Nx command ([ad184bf](https://github.com/vincenthsh/gamma/commit/ad184bfd262eb335c6e2e5d2d7c7aa6187069b2b))
+
 ## [1.2.0](https://github.com/vincenthsh/gamma/compare/v1.1.0...v1.2.0) (2024-05-09)
 
 

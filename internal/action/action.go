@@ -25,6 +25,7 @@ type action struct {
 	outputDirectory  string
 	workingDirectory string
 	owner            string
+	repoName         string
 }
 
 type Config struct {
@@ -38,6 +39,7 @@ type Action interface {
 	Build() error
 	Name() string
 	Owner() string
+	RepoName() string
 	OutputDirectory() string
 	Contains(filename string) bool
 }
@@ -59,11 +61,16 @@ func New(config *Config) (Action, error) {
 		outputDirectory:  config.OutputDirectory,
 		workingDirectory: config.WorkingDirectory,
 		owner:            parts[0],
+		repoName:         strings.TrimSuffix(parts[1], ".git"),
 	}, nil
 }
 
 func (a *action) Name() string {
 	return a.packageInfo.Name
+}
+
+func (a *action) RepoName() string {
+	return a.repoName
 }
 
 func (a *action) OutputDirectory() string {

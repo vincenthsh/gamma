@@ -174,7 +174,7 @@ func (g *git) getTree(ctx context.Context, ref *github.Reference, a action.Actio
 		return nil, ferr
 	}
 
-	tree, _, err := g.gh.Git.CreateTree(ctx, a.Owner(), a.Name(), *ref.Object.SHA, entries)
+	tree, _, err := g.gh.Git.CreateTree(ctx, a.Owner(), a.RepoName(), *ref.Object.SHA, entries)
 
 	return tree, err
 }
@@ -185,7 +185,7 @@ func (g *git) getRef(ctx context.Context, a action.Action) (*github.Reference, e
 		return nil, fmt.Errorf("could not get HEAD: %v", err)
 	}
 
-	ref, _, err := g.gh.Git.GetRef(ctx, a.Owner(), a.Name(), head.Name().String())
+	ref, _, err := g.gh.Git.GetRef(ctx, a.Owner(), a.RepoName(), head.Name().String())
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (g *git) getRef(ctx context.Context, a action.Action) (*github.Reference, e
 }
 
 func (g *git) pushCommit(ctx context.Context, ref *github.Reference, tree *github.Tree, a action.Action) error {
-	parent, _, err := g.gh.Repositories.GetCommit(ctx, a.Owner(), a.Name(), *ref.Object.SHA, nil)
+	parent, _, err := g.gh.Repositories.GetCommit(ctx, a.Owner(), a.RepoName(), *ref.Object.SHA, nil)
 	if err != nil {
 		return err
 	}
@@ -217,13 +217,13 @@ func (g *git) pushCommit(ctx context.Context, ref *github.Reference, tree *githu
 		Parents: []*github.Commit{parent.Commit},
 	}
 
-	newCommit, _, err := g.gh.Git.CreateCommit(ctx, a.Owner(), a.Name(), commit)
+	newCommit, _, err := g.gh.Git.CreateCommit(ctx, a.Owner(), a.RepoName(), commit)
 	if err != nil {
 		return err
 	}
 
 	ref.Object.SHA = newCommit.SHA
-	_, _, err = g.gh.Git.UpdateRef(ctx, a.Owner(), a.Name(), ref, false)
+	_, _, err = g.gh.Git.UpdateRef(ctx, a.Owner(), a.RepoName(), ref, false)
 
 	return err
 }

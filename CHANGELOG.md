@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/vincenthsh/gamma/compare/v1.2.1...v1.2.2) (2024-05-10)
+
+
+### Bug Fixes
+
+* Read repo Name from package.json repository field ([5335155](https://github.com/vincenthsh/gamma/commit/5335155a2b8f12b6388dd94d37c39ea402d69b5c))
+
 ## [1.2.1](https://github.com/vincenthsh/gamma/compare/v1.2.0...v1.2.1) (2024-05-09)
 
 

@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gravitational/gamma/cmd/build"
+	"github.com/gravitational/gamma/cmd/checkversions"
 	"github.com/gravitational/gamma/cmd/deploy"
 	"github.com/gravitational/gamma/internal/color"
 )
@@ -32,6 +33,7 @@ func init() {
 	cobra.AddTemplateFunc("logo", logo)
 
 	rootCmd.AddCommand(build.Command)
+	rootCmd.AddCommand(checkversions.Command)
 	rootCmd.AddCommand(deploy.Command)
 
 	rootCmd.SetHelpTemplate(`{{ logo }}
@@ -76,6 +78,8 @@ func colorize(s, name string) string {
 	switch s {
 	case build.Command.Name():
 		return color.Magenta(name)
+	case checkversions.Command.Name():
+		return color.Purple(name)
 	case deploy.Command.Name():
 		return color.Teal(name)
 	case "help":
@@ -91,6 +95,8 @@ func emoji(s string) string {
 	switch s {
 	case build.Command.Name():
 		return "🔧"
+	case checkversions.Command.Name():
+		return "🔍"
 	case deploy.Command.Name():
 		return "🚀"
 	case "help":

@@ -38,6 +38,7 @@ type Config struct {
 type Action interface {
 	Build() error
 	Name() string
+	Version() string
 	Owner() string
 	RepoName() string
 	OutputDirectory() string
@@ -67,6 +68,10 @@ func New(config *Config) (Action, error) {
 
 func (a *action) Name() string {
 	return a.packageInfo.Name
+}
+
+func (a *action) Version() string {
+	return a.packageInfo.Version
 }
 
 func (a *action) RepoName() string {

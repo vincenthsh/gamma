@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/vincenthsh/gamma/compare/v1.2.2...v1.3.0) (2024-05-11)
+
+
+### Features
+
+* add -t, --push-tags flag to deploy ([8e1d369](https://github.com/vincenthsh/gamma/commit/8e1d3699ef4e708222e648db6c807c7a712f7a9e))
+
 ## [1.2.2](https://github.com/vincenthsh/gamma/compare/v1.2.1...v1.2.2) (2024-05-10)
 
 

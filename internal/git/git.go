@@ -19,7 +19,8 @@ import (
 
 type Git interface {
 	GetChangedFiles() ([]string, error)
-	DeployAction(a action.Action) error
+	TagExists(a action.Action) (bool, error)
+	DeployAction(a action.Action, pushTags bool) error
 }
 
 type git struct {
@@ -74,6 +75,22 @@ func createGithubClient() (*github.Client, error) {
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
+func (g *git) TagExists(a action.Action) (bool, error) {
+	tags, _, err := g.gh.Repositories.ListTags(context.Background(), a.Owner(), a.RepoName(), nil)
+	if err != nil {
+		return false, fmt.Errorf("could not fetch tags: %v", err)
+	}
+
+	// iterate over all tags, return true if the tag exists
+	for _, t := range tags {
+		if *t.Name == fmt.Sprintf("v%s", a.Version()) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (g *git) GetChangedFiles() ([]string, error) {
 	head, err := g.repo.Head()
 	if err != nil {
@@ -117,10 +134,22 @@ func (g *git) GetChangedFiles() ([]string, error) {
 	return files, nil
 }
 
-func (g *git) DeployAction(a action.Action) error {
+func (g *git) DeployAction(a action.Action, pushTags bool) error {
 	ref, err := g.getRef(context.Background(), a)
 	if err != nil {
 		return fmt.Errorf("could not create git ref: %v", err)
+	}
+
+	if pushTags {
+		// make sure tag doesn't already exist
+		tagExists, err := g.TagExists(a)
+		if err != nil {
+			return fmt.Errorf("could not verify if tag exists: %v", err)
+		}
+
+		if tagExists {
+			return fmt.Errorf("tag already exists: v%v", a.Version())
+		}
 	}
 
 	tree, err := g.getTree(context.Background(), ref, a)
@@ -128,8 +157,15 @@ func (g *git) DeployAction(a action.Action) error {
 		return fmt.Errorf("could not create git tree: %v", err)
 	}
 
-	if err := g.pushCommit(context.Background(), ref, tree, a); err != nil {
+	newCommit, err := g.pushCommit(context.Background(), ref, tree, a)
+	if err != nil {
 		return fmt.Errorf("could not push changes: %v", err)
+	}
+
+	if pushTags {
+		if err := g.pushTag(context.Background(), a, newCommit); err != nil {
+			return fmt.Errorf("could not push tag: %v", err)
+		}
 	}
 
 	return nil
@@ -193,22 +229,22 @@ func (g *git) getRef(ctx context.Context, a action.Action) (*github.Reference, e
 	return ref, nil
 }
 
-func (g *git) pushCommit(ctx context.Context, ref *github.Reference, tree *github.Tree, a action.Action) error {
+func (g *git) pushCommit(ctx context.Context, ref *github.Reference, tree *github.Tree, a action.Action) (*github.Commit, error) {
 	parent, _, err := g.gh.Repositories.GetCommit(ctx, a.Owner(), a.RepoName(), *ref.Object.SHA, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	parent.Commit.SHA = parent.SHA
 
 	head, err := g.repo.Head()
 	if err != nil {
-		return fmt.Errorf("could not get HEAD: %v", err)
+		return nil, fmt.Errorf("could not get HEAD: %v", err)
 	}
 
 	c, err := g.repo.CommitObject(head.Hash())
 	if err != nil {
-		return fmt.Errorf("could not get the HEAD commit: %v", err)
+		return nil, fmt.Errorf("could not get the HEAD commit: %v", err)
 	}
 
 	commit := &github.Commit{
@@ -219,11 +255,35 @@ func (g *git) pushCommit(ctx context.Context, ref *github.Reference, tree *githu
 
 	newCommit, _, err := g.gh.Git.CreateCommit(ctx, a.Owner(), a.RepoName(), commit)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ref.Object.SHA = newCommit.SHA
 	_, _, err = g.gh.Git.UpdateRef(ctx, a.Owner(), a.RepoName(), ref, false)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return newCommit, nil
+}
+
+func (g *git) pushTag(ctx context.Context, a action.Action, newCommit *github.Commit) error {
+	tagString := fmt.Sprintf("v%v", a.Version())
+	tag := &github.Tag{
+		Tag:     github.String(tagString),
+		Message: github.String(fmt.Sprintf("Tag for version %s", a.Version())),
+		Object:  &github.GitObject{SHA: github.String(*newCommit.SHA), Type: github.String("commit")},
+	}
+
+	_, _, err := g.gh.Git.CreateTag(ctx, a.Owner(), a.RepoName(), tag)
+	if err != nil {
+		return fmt.Errorf("could not create the tag: %v", err)
+	}
+
+	refTag := &github.Reference{Ref: github.String("refs/tags/" + tagString), Object: &github.GitObject{SHA: github.String(*newCommit.SHA)}}
+	_, _, err = g.gh.Git.CreateRef(ctx, a.Owner(), a.RepoName(), refTag)
+	if err != nil {
+		return fmt.Errorf("could not create the reference for tag: %v", err)
+	}
+	return nil
 }

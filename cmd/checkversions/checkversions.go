@@ -1,4 +1,4 @@
-package deploy
+package checkversions
 
 import (
 	"os"
@@ -15,16 +15,13 @@ import (
 	"github.com/gravitational/gamma/internal/workspace"
 )
 
-var outputDirectory string
 var workingDirectory string
-var pushTags *bool
-var assetPaths []string
 
 var Command = &cobra.Command{
-	Use:   "deploy",
-	Short: "Builds and deploys actions",
-	Long:  `Builds and deploys all the actions that have changes.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:   "check-versions",
+	Short: "Check versions of changed actions in the monorepo",
+	Long:  `Finds all changed actions and verifies no tag exists for their current version.`,
+	Run: func(_ *cobra.Command, _ []string) {
 		started := time.Now()
 
 		if workingDirectory == "the current working directory" { // this is the default value from the flag
@@ -36,17 +33,11 @@ var Command = &cobra.Command{
 			workingDirectory = wd
 		}
 
+		// TODO: clean this up
+		outputDirectory := "build" // ignored
 		wd, od, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
 		if err != nil {
 			logger.Fatal(err)
-		}
-
-		if err := os.RemoveAll(od); err != nil {
-			logger.Fatalf("could not remove output directory: %v", err)
-		}
-
-		if err := os.Mkdir(od, 0755); err != nil {
-			logger.Fatalf("could not create output directory: %v", err)
 		}
 
 		repo, err := git.New(wd)
@@ -83,57 +74,45 @@ var Command = &cobra.Command{
 
 		logger.Infof("found actions [%s]", strings.Join(actionNames, ", "))
 
-		var actionsToBuild []action.Action
+		var actionsToVerify []action.Action
 
 	outer:
 		for _, action := range actions {
 			for _, file := range changed {
 				if action.Contains(file) {
-					actionsToBuild = append(actionsToBuild, action)
+					actionsToVerify = append(actionsToVerify, action)
 
 					continue outer
 				}
 			}
 		}
-
-		if len(actionsToBuild) == 0 {
-			logger.Warning("no actions need building, exiting")
+		if len(actionsToVerify) == 0 {
+			logger.Warning("no actions have changed, exiting")
 
 			return
 		}
 
 		var hasError bool
 
-		for _, action := range actionsToBuild {
-			logger.Infof("action %s has changes, building", action.Name())
+		for _, action := range actionsToVerify {
+			logger.Infof("action %s has changes, verifying version", action.Name())
 
-			buildStarted := time.Now()
+			verifyStarted := time.Now()
 
-			if err := action.Build(); err != nil {
+			if exists, err := repo.TagExists(action); err != nil || exists {
 				hasError = true
-				logger.Errorf("error building action %s: %v", action.Name(), err)
-
-				continue
+				if err != nil {
+					logger.Errorf("error verifying action %s: %v", action.Name(), err)
+				}
+				if exists {
+					logger.Errorf("version %s@v%s already exists", action.Name(), action.Version())
+					continue
+				}
 			}
 
-			buildTook := time.Since(buildStarted)
+			verifyTook := time.Since(verifyStarted)
 
-			logger.Successf("successfully built action %s in %.2fs", action.Name(), buildTook.Seconds())
-
-			logger.Infof("deploying action %s", action.Name())
-
-			deployStarted := time.Now()
-
-			if err := repo.DeployAction(action, *pushTags); err != nil {
-				hasError = true
-				logger.Errorf("error deploying action %s: %v", action.Name(), err)
-
-				continue
-			}
-
-			deployTook := time.Since(deployStarted)
-
-			logger.Successf("successfully deployed action %s in %.2fs", action.Name(), deployTook.Seconds())
+			logger.Successf("successfully verified action %s@v%s in %.2fs", action.Name(), action.Version(), verifyTook.Seconds())
 		}
 
 		bold := text.Colors{text.FgWhite, text.Bold}
@@ -149,8 +128,5 @@ var Command = &cobra.Command{
 }
 
 func init() {
-	Command.Flags().StringVarP(&outputDirectory, "output", "o", "build", "output directory")
 	Command.Flags().StringVarP(&workingDirectory, "directory", "d", "the current working directory", "directory containing the monorepo of actions")
-	pushTags = Command.Flags().BoolP("push-tags", "t", false, "also the version of action as tag")
-	Command.Flags().StringArrayVarP(&assetPaths, "asset", "a", []string{}, "copy over an asset to each action")
 }

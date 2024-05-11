@@ -13,6 +13,7 @@ Gamma is a tool that sets out to solve a few shortcomings when it comes to manag
 - 🚀 Automatically build all your actions into individual, publishable repos
 - 🚀 Share schema definitions between actions
 - 🚀 Version all actions separately
+- 🚀 Optionally push version tags
 
 Gamma allows you to have a monorepo of actions that are then built and deployed into individual repos. Having each action in its own repo allows for the action to be published on the Github Marketplace.
 
@@ -20,9 +21,11 @@ Gamma also goes further when it comes to sharing common `action.yml` attributes 
 
 ## How to use
 
-This assumes you're using `yarn` with workspaces. Each workspace is an action.
+This assumes you're using `pnpm` with workspaces and `nx` for caching. Each workspace is an action.
 
-Your root `package.json` should look like:
+A good monorepo bootstrapper for `pnpm` and `nx` is [@aws/pdk - monorepoTs](https://aws.github.io/aws-pdk/developer_guides/monorepo/index.html) project type.
+
+Your root `package.json` will look like:
 
 ```json
 {
@@ -42,7 +45,7 @@ Your root `package.json` should look like:
 
 Each action then lives under the `actions/` directory.
 
-Each action should be able to be built via `yarn build`. We recommend [ncc](https://github.com/vercel/ncc) for building your actions. The compiled source code should end up in a `dist` folder, relative to the action. You should add `dist/` to your `.gitignore`.
+Each action should be able to be built via `pnpm exec nx run <packageName>:build`. We recommend [ncc](https://github.com/vercel/ncc) for building your actions. The compiled source code should end up in a `dist` folder, relative to the action. You should add `dist/` to your `.gitignore`.
 
 `actions/example/package.json`
 
@@ -99,7 +102,7 @@ branding:
   icon: terminal
   color: purple
 runs:
-  using: node16
+  using: node20
   main: dist/index.js
 ```
 
@@ -116,7 +119,7 @@ inputs:
         description: Specify the version without the preceding "v"
         required: true
 runs:
-    using: node16
+    using: node20
     main: dist/index.js
 branding:
     icon: terminal

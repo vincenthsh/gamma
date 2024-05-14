@@ -17,6 +17,7 @@ import (
 
 var outputDirectory string
 var workingDirectory string
+var workspaceManifest string
 var pushTags *bool
 var assetPaths []string
 
@@ -63,7 +64,7 @@ var Command = &cobra.Command{
 
 		logger.Infof("files changed [%s]", strings.Join(changed, ", "))
 
-		ws := workspace.New(wd, od)
+		ws := workspace.New(wd, od, workspaceManifest)
 
 		logger.Info("collecting actions")
 
@@ -151,6 +152,7 @@ var Command = &cobra.Command{
 func init() {
 	Command.Flags().StringVarP(&outputDirectory, "output", "o", "build", "output directory")
 	Command.Flags().StringVarP(&workingDirectory, "directory", "d", "the current working directory", "directory containing the monorepo of actions")
+	Command.Flags().StringVarP(&workspaceManifest, "workspace", "w", "gamma-workspace.yml", "workspace manifest for non-javascript actions")
 	pushTags = Command.Flags().BoolP("push-tags", "t", false, "also the version of action as tag")
 	Command.Flags().StringArrayVarP(&assetPaths, "asset", "a", []string{}, "copy over an asset to each action")
 }

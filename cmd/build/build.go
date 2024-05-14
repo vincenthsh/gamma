@@ -15,6 +15,7 @@ import (
 
 var outputDirectory string
 var workingDirectory string
+var workspaceManifest string
 
 var Command = &cobra.Command{
 	Use:   "build",
@@ -45,7 +46,7 @@ var Command = &cobra.Command{
 			logger.Fatalf("could not create output directory: %v", err)
 		}
 
-		ws := workspace.New(wd, od)
+		ws := workspace.New(wd, od, workspaceManifest)
 
 		logger.Info("collecting actions")
 
@@ -99,4 +100,5 @@ var Command = &cobra.Command{
 func init() {
 	Command.Flags().StringVarP(&outputDirectory, "output", "o", "build", "output directory")
 	Command.Flags().StringVarP(&workingDirectory, "directory", "d", "the current working directory", "directory containing the monorepo of actions")
+	Command.Flags().StringVarP(&workspaceManifest, "workspace", "w", "gamma-workspace.yml", "workspace manifest for non-javascript actions")
 }

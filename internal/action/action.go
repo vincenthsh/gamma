@@ -132,7 +132,7 @@ func (a *action) Owner() string {
 }
 
 func (a *action) Contains(filename string) bool {
-	normalizedPath, _ := filepath.Rel(a.workingDirectory, a.packageInfo.Path)
+	normalizedPath, _ := filepath.Rel(a.workingDirectory, a.Path())
 
 	return strings.HasPrefix(filename, normalizedPath+"/")
 }
@@ -144,17 +144,26 @@ func (a *action) buildPackage() error {
 	cmd := exec.Command("pnpm", "exec", "nx", "run", fmt.Sprintf("%s:build", a.packageInfo.Name))
 	cmd.Dir = a.packageInfo.Path
 
-	// get relative path
-	workingDir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	relativePath, err := filepath.Rel(workingDir, a.packageInfo.Path)
-	if err != nil {
+	if err := a.runCommand(cmd); err != nil {
 		return err
 	}
 
-	// stream stderr/stdin
+	return a.movePackage()
+}
+
+func (a *action) runCommand(cmd *exec.Cmd) error {
+	var err error
+	var relativePath string
+	var workingDir string
+
+	if workingDir, err = os.Getwd(); err != nil {
+		return err
+	}
+
+	if relativePath, err = filepath.Rel(workingDir, a.Path()); err != nil {
+		return err
+	}
+
 	cmd.Stderr = os.Stderr
 	stdout, _ := cmd.StdoutPipe()
 	if err := cmd.Start(); err != nil {
@@ -168,8 +177,7 @@ func (a *action) buildPackage() error {
 	if err := cmd.Wait(); err != nil {
 		return err
 	}
-
-	return a.movePackage()
+	return nil
 }
 
 func (a *action) movePackage() error {

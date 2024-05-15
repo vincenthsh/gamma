@@ -17,7 +17,9 @@ import (
 
 	"github.com/gravitational/gamma/internal/node"
 	"github.com/gravitational/gamma/internal/schema"
+	"github.com/gravitational/gamma/internal/utils"
 	publicshema "github.com/gravitational/gamma/pkg/schema"
+	"github.com/mitchellh/copystructure"
 )
 
 type Kind int
@@ -32,7 +34,7 @@ type action struct {
 	kind             Kind
 	name             string
 	packageInfo      *node.PackageInfo
-	workspaceInfo    *publicshema.ActionInfo
+	actionInfo       *publicshema.ActionInfo
 	outputDirectory  string
 	workingDirectory string
 	owner            string
@@ -44,7 +46,7 @@ type Config struct {
 	WorkingDirectory string
 	OutputDirectory  string
 	PackageInfo      *node.PackageInfo
-	WorkspaceInfo    *publicshema.ActionInfo
+	ActionInfo       *publicshema.ActionInfo
 }
 
 type Action interface {
@@ -63,13 +65,28 @@ func New(config *Config) (Action, error) {
 	var uriString string
 	var kind Kind
 
+	actionInfo := config.ActionInfo
+
 	switch {
 	case config.PackageInfo != nil && config.PackageInfo.Repository != nil:
 		kind = Javascript
 		uriString = config.PackageInfo.Repository.URL
-	case config.WorkspaceInfo != nil:
+	case actionInfo != nil:
 		kind = Composite
-		uriString = config.WorkspaceInfo.RepositoryURL
+		uriString = config.ActionInfo.RepositoryURL
+		// normalize ActionInfo.OutputDirectory to match PackageInfo.Path
+		oda, err := utils.NormalizeDirectories(config.ActionInfo.OutputDirectory)
+		if err != nil {
+			return nil, err
+		}
+
+		structCopy, err := copystructure.Copy(config.ActionInfo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy workspace info: %v", err)
+		}
+
+		actionInfo = structCopy.(*publicshema.ActionInfo)
+		actionInfo.OutputDirectory = oda[0]
 	default:
 		return nil, errors.New("repository field missing in Action")
 	}
@@ -85,7 +102,7 @@ func New(config *Config) (Action, error) {
 		kind:             kind,
 		name:             config.Name,
 		packageInfo:      config.PackageInfo,
-		workspaceInfo:    config.WorkspaceInfo,
+		actionInfo:       actionInfo,
 		outputDirectory:  config.OutputDirectory,
 		workingDirectory: config.WorkingDirectory,
 		owner:            parts[0],
@@ -107,7 +124,7 @@ func (a *action) Version() string {
 	case Javascript:
 		return a.packageInfo.Version
 	default:
-		return a.workspaceInfo.Version
+		return a.actionInfo.Version
 	}
 }
 
@@ -116,7 +133,7 @@ func (a *action) Path() string {
 	case Javascript:
 		return a.packageInfo.Path
 	default:
-		return a.workspaceInfo.OutputDirectory
+		return a.actionInfo.OutputDirectory
 	}
 }
 

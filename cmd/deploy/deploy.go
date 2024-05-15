@@ -28,19 +28,13 @@ var Command = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		started := time.Now()
 
-		if workingDirectory == "the current working directory" { // this is the default value from the flag
-			wd, err := os.Getwd()
-			if err != nil {
-				logger.Fatalf("could not get current working directory: %v", err)
-			}
+		workingDirectory = utils.FetchWorkingDirectory(workingDirectory)
 
-			workingDirectory = wd
-		}
-
-		wd, od, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
+		nd, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
 		if err != nil {
 			logger.Fatal(err)
 		}
+		wd, od := nd[0], nd[1]
 
 		if err := os.RemoveAll(od); err != nil {
 			logger.Fatalf("could not remove output directory: %v", err)
@@ -64,7 +58,11 @@ var Command = &cobra.Command{
 
 		logger.Infof("files changed [%s]", strings.Join(changed, ", "))
 
-		ws := workspace.New(wd, od, workspaceManifest)
+		ws := workspace.New(workspace.Properties{
+			WorkingDirectory:  wd,
+			OutputDirectory:   od,
+			WorkspaceManifest: workspaceManifest,
+		})
 
 		logger.Info("collecting actions")
 
@@ -153,6 +151,6 @@ func init() {
 	Command.Flags().StringVarP(&outputDirectory, "output", "o", "build", "output directory")
 	Command.Flags().StringVarP(&workingDirectory, "directory", "d", "the current working directory", "directory containing the monorepo of actions")
 	Command.Flags().StringVarP(&workspaceManifest, "workspace", "w", "gamma-workspace.yml", "workspace manifest for non-javascript actions")
-	pushTags = Command.Flags().BoolP("push-tags", "t", false, "also the version of action as tag")
+	pushTags = Command.Flags().BoolP("push-tags", "t", false, "push the action version tags")
 	Command.Flags().StringArrayVarP(&assetPaths, "asset", "a", []string{}, "copy over an asset to each action")
 }

@@ -22,17 +22,30 @@ type workspace struct {
 	packages          node.PackageService
 }
 
-func New(workingDirectory, outputDirectory, workspaceManifest string) Workspace {
+type Properties struct {
+	WorkingDirectory  string
+	OutputDirectory   string
+	WorkspaceManifest string
+}
+
+func New(props Properties) Workspace {
+	if props.WorkingDirectory == "" {
+		props.WorkingDirectory = "."
+	}
+	if props.OutputDirectory == "" {
+		props.OutputDirectory = "build"
+	}
+
 	return &workspace{
-		workingDirectory,
-		outputDirectory,
-		workspaceManifest,
-		node.NewPackageService(workingDirectory),
+		props.WorkingDirectory,
+		props.OutputDirectory,
+		props.WorkspaceManifest,
+		node.NewPackageService(props.WorkingDirectory),
 	}
 }
 
 func (w *workspace) CollectActions() ([]action.Action, error) {
-	// read root package
+	// TODO: don't error if rootPackage doesn't exist
 	rootPackage, err := w.readRootPackage()
 	if err != nil {
 		return nil, err
@@ -77,7 +90,7 @@ func (w *workspace) CollectActions() ([]action.Action, error) {
 				Name:             a.Name,
 				WorkingDirectory: w.workingDirectory,
 				OutputDirectory:  outputDirectory,
-				WorkspaceInfo:    &a,
+				ActionInfo:       &a,
 			}
 
 			action, err := action.New(config)

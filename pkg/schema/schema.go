@@ -6,6 +6,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type WorkspaceManifest struct {
+	Actions []ActionConfig `yaml:"actions"`
+}
+
 type ActionConfig struct {
 	Name            string `yaml:"name"`
 	Version         string `yaml:"version"`

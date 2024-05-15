@@ -17,11 +17,22 @@ import (
 
 	"github.com/gravitational/gamma/internal/node"
 	"github.com/gravitational/gamma/internal/schema"
+	publicshema "github.com/gravitational/gamma/pkg/schema"
+)
+
+type Kind int
+
+const (
+	Javascript Kind = iota
+	Composite
+	Docker
 )
 
 type action struct {
+	kind             Kind
 	name             string
 	packageInfo      *node.PackageInfo
+	workspaceInfo    *publicshema.ActionConfig
 	outputDirectory  string
 	workingDirectory string
 	owner            string
@@ -33,12 +44,14 @@ type Config struct {
 	WorkingDirectory string
 	OutputDirectory  string
 	PackageInfo      *node.PackageInfo
+	WorkspaceInfo    *publicshema.ActionConfig
 }
 
 type Action interface {
 	Build() error
 	Name() string
 	Version() string
+	Path() string
 	Owner() string
 	RepoName() string
 	OutputDirectory() string
@@ -46,10 +59,21 @@ type Action interface {
 }
 
 func New(config *Config) (Action, error) {
-	if config.PackageInfo.Repository == nil {
+	var uriString string
+	var kind Kind
+
+	switch {
+	case config.PackageInfo != nil && config.PackageInfo.Repository != nil:
+		kind = Javascript
+		uriString = config.PackageInfo.Repository.URL
+	case config.WorkspaceInfo != nil:
+		kind = Composite
+		uriString = config.WorkspaceInfo.RepositoryURL
+	default:
 		return nil, errors.New("repository field missing in Action")
 	}
-	uri, err := url.Parse(config.PackageInfo.Repository.URL)
+
+	uri, err := url.Parse(uriString)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +81,10 @@ func New(config *Config) (Action, error) {
 	parts := strings.Split(uri.Path[1:], "/")
 
 	return &action{
+		kind:             kind,
 		name:             config.Name,
 		packageInfo:      config.PackageInfo,
+		workspaceInfo:    config.WorkspaceInfo,
 		outputDirectory:  config.OutputDirectory,
 		workingDirectory: config.WorkingDirectory,
 		owner:            parts[0],
@@ -67,11 +93,30 @@ func New(config *Config) (Action, error) {
 }
 
 func (a *action) Name() string {
-	return a.packageInfo.Name
+	switch a.kind {
+	case Javascript:
+		return a.packageInfo.Name
+	default:
+		return a.name
+	}
 }
 
 func (a *action) Version() string {
-	return a.packageInfo.Version
+	switch a.kind {
+	case Javascript:
+		return a.packageInfo.Version
+	default:
+		return a.workspaceInfo.Version
+	}
+}
+
+func (a *action) Path() string {
+	switch a.kind {
+	case Javascript:
+		return a.packageInfo.Path
+	default:
+		return a.workspaceInfo.OutputDirectory
+	}
 }
 
 func (a *action) RepoName() string {
@@ -93,6 +138,9 @@ func (a *action) Contains(filename string) bool {
 }
 
 func (a *action) buildPackage() error {
+	if a.kind != Javascript {
+		return fmt.Errorf("action %s is not a Javascript action, can't build package", a.name)
+	}
 	cmd := exec.Command("pnpm", "exec", "nx", "run", fmt.Sprintf("%s:build", a.packageInfo.Name))
 	cmd.Dir = a.packageInfo.Path
 
@@ -136,7 +184,7 @@ func (a *action) movePackage() error {
 }
 
 func (a *action) createActionYAML() error {
-	filename := path.Join(a.packageInfo.Path, "action.yml")
+	filename := path.Join(a.Path(), "action.yml")
 
 	definition, err := schema.GetConfig(a.workingDirectory, filename)
 	if err != nil {
@@ -157,7 +205,7 @@ func (a *action) createActionYAML() error {
 }
 
 func (a *action) copyFile(file string) error {
-	src := path.Join(a.packageInfo.Path, file)
+	src := path.Join(a.Path(), file)
 	dst := path.Join(a.outputDirectory, file)
 
 	if _, err := os.Stat(src); errors.Is(err, os.ErrNotExist) {
@@ -221,9 +269,11 @@ func (a *action) Build() error {
 
 	var eg errgroup.Group
 
-	eg.Go(a.buildPackage)
 	eg.Go(a.createActionYAML)
 	eg.Go(a.copyFiles)
+	if a.kind == Javascript {
+		eg.Go(a.buildPackage)
+	}
 
 	if err := eg.Wait(); err != nil {
 		return err

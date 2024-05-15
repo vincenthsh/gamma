@@ -1,10 +1,14 @@
 package workspace
 
 import (
+	"fmt"
+	"os"
 	"path"
 
 	"github.com/gravitational/gamma/internal/action"
 	"github.com/gravitational/gamma/internal/node"
+	"github.com/gravitational/gamma/pkg/schema"
+	"gopkg.in/yaml.v3"
 )
 
 type Workspace interface {
@@ -12,32 +16,35 @@ type Workspace interface {
 }
 
 type workspace struct {
-	workingDirectory string
-	outputDirectory  string
-	packages         node.PackageService
+	workingDirectory  string
+	outputDirectory   string
+	workspaceManifest string
+	packages          node.PackageService
 }
 
-func New(workingDirectory, outputDirectory string) Workspace {
+func New(workingDirectory, outputDirectory, workspaceManifest string) Workspace {
 	return &workspace{
 		workingDirectory,
 		outputDirectory,
+		workspaceManifest,
 		node.NewPackageService(workingDirectory),
 	}
 }
 
 func (w *workspace) CollectActions() ([]action.Action, error) {
+	// read root package
 	rootPackage, err := w.readRootPackage()
 	if err != nil {
 		return nil, err
 	}
 
-	workspaces, err := w.packages.GetWorkspaces(rootPackage)
+	nodeWorkspaces, err := w.packages.GetWorkspaces(rootPackage)
 	if err != nil {
 		return nil, err
 	}
 
 	var actions []action.Action
-	for _, ws := range workspaces {
+	for _, ws := range nodeWorkspaces {
 		outputDirectory := path.Join(w.outputDirectory, ws.Name)
 
 		config := &action.Config{
@@ -55,6 +62,31 @@ func (w *workspace) CollectActions() ([]action.Action, error) {
 		actions = append(actions, action)
 	}
 
+	workspaceManifest, err := w.readWorkspaceManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	if workspaceManifest != nil {
+		for _, a := range workspaceManifest.Actions {
+			outputDirectory := path.Join(w.outputDirectory, a.Name)
+
+			config := &action.Config{
+				Name:             a.Name,
+				WorkingDirectory: w.workingDirectory,
+				OutputDirectory:  outputDirectory,
+				WorkspaceInfo:    &a,
+			}
+
+			action, err := action.New(config)
+			if err != nil {
+				return nil, err
+			}
+
+			actions = append(actions, action)
+		}
+	}
+
 	return actions, nil
 }
 
@@ -62,4 +94,24 @@ func (w *workspace) readRootPackage() (*node.PackageInfo, error) {
 	p := path.Join(w.workingDirectory, "package.json")
 
 	return w.packages.ReadPackageInfo(p)
+}
+
+// Gamma specific workspace manifest for non javascript actions
+type workspaceManifest struct {
+	Actions []schema.ActionConfig `yaml:"actions"`
+}
+
+// readWorkspaceManifest if it exists
+func (w *workspace) readWorkspaceManifest() (*workspaceManifest, error) {
+	file, err := os.ReadFile(path.Join(w.workingDirectory, w.workspaceManifest))
+	if err != nil {
+		// ignore if file doesn't exist
+		return nil, nil
+	}
+	var config workspaceManifest
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal yaml: %v", err)
+	}
+	return &config, nil
 }

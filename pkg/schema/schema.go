@@ -6,6 +6,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ActionConfig struct {
+	Name            string `yaml:"name"`
+	Version         string `yaml:"version"`
+	OutputDirectory string `yaml:"path"`
+	RepositoryURL   string `yaml:"repository"`
+}
+
 type Config struct {
 	Path        string     `yaml:"-"`
 	Name        string     `yaml:"name"`

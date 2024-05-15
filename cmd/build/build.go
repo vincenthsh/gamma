@@ -69,7 +69,7 @@ var Command = &cobra.Command{
 		var hasError bool
 
 		for _, action := range actions {
-			logger.Infof("action %s has changes, building", action.Name())
+			logger.Infof("building action %s", action.Name())
 
 			buildStarted := time.Now()
 

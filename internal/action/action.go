@@ -32,7 +32,7 @@ type action struct {
 	kind             Kind
 	name             string
 	packageInfo      *node.PackageInfo
-	workspaceInfo    *publicshema.ActionConfig
+	workspaceInfo    *publicshema.ActionInfo
 	outputDirectory  string
 	workingDirectory string
 	owner            string
@@ -44,11 +44,12 @@ type Config struct {
 	WorkingDirectory string
 	OutputDirectory  string
 	PackageInfo      *node.PackageInfo
-	WorkspaceInfo    *publicshema.ActionConfig
+	WorkspaceInfo    *publicshema.ActionInfo
 }
 
 type Action interface {
 	Build() error
+	GetActionYAML() (*string, error)
 	Name() string
 	Version() string
 	Path() string
@@ -191,25 +192,30 @@ func (a *action) movePackage() error {
 	return nil
 }
 
-func (a *action) createActionYAML() error {
+// createActionYAML merges the gamma customConfig
+// write indicates if merged config should be written to outputDirectory or returned by pointer
+func (a *action) createActionYAML(write bool) (*string, error) {
 	filename := path.Join(a.Path(), "action.yml")
 
 	definition, err := schema.GetConfig(a.workingDirectory, filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	bytes, err := yaml.Marshal(definition)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	output := path.Join(a.outputDirectory, "action.yml")
-	if err := os.WriteFile(output, bytes, 0644); err != nil {
-		return fmt.Errorf("could not create action.yml: %v", err)
+	if write {
+		output := path.Join(a.outputDirectory, "action.yml")
+		if err := os.WriteFile(output, bytes, 0644); err != nil {
+			return nil, fmt.Errorf("could not create action.yml: %v", err)
+		}
 	}
 
-	return nil
+	str := string(bytes)
+	return &str, nil
 }
 
 func (a *action) copyFile(file string) error {
@@ -277,7 +283,10 @@ func (a *action) Build() error {
 
 	var eg errgroup.Group
 
-	eg.Go(a.createActionYAML)
+	eg.Go(func() error {
+		_, err := a.createActionYAML(true)
+		return err
+	})
 	eg.Go(a.copyFiles)
 	if a.kind == Javascript {
 		eg.Go(a.buildPackage)
@@ -288,4 +297,8 @@ func (a *action) Build() error {
 	}
 
 	return nil
+}
+
+func (a *action) GetActionYAML() (*string, error) {
+	return a.createActionYAML(false)
 }

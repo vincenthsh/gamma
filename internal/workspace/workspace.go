@@ -71,6 +71,8 @@ func (w *workspace) CollectActions() ([]action.Action, error) {
 		for _, a := range workspaceManifest.Actions {
 			outputDirectory := path.Join(w.outputDirectory, a.Name)
 
+			// Create a new instance of 'a' that is scoped to this loop iteration.
+			a := a
 			config := &action.Config{
 				Name:             a.Name,
 				WorkingDirectory: w.workingDirectory,

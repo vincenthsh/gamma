@@ -7,10 +7,10 @@ import (
 )
 
 type WorkspaceManifest struct {
-	Actions []ActionConfig `yaml:"actions"`
+	Actions []ActionInfo `yaml:"actions"`
 }
 
-type ActionConfig struct {
+type ActionInfo struct {
 	Name            string `yaml:"name"`
 	Version         string `yaml:"version"`
 	OutputDirectory string `yaml:"path"`

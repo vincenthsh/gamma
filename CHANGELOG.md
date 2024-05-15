@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/vincenthsh/gamma/compare/v1.3.0...v1.4.0) (2024-05-15)
+
+
+### Features
+
+* Add merge command for external action validation ([2a01f73](https://github.com/vincenthsh/gamma/commit/2a01f73de7817f2c416dbe8120b7886bfd0157b2))
+* Add support for non Javascript actions ([a4a7f24](https://github.com/vincenthsh/gamma/commit/a4a7f2481f67c6d26b58ffe6f9e7f773d2f4e341))
+
+
+### Bug Fixes
+
+* Make workspacemanifest public schema ([f796efc](https://github.com/vincenthsh/gamma/commit/f796efcc37e4979973c226975d6de156dce21467))
+* Panic on action.Contains() nil pointer ([38e2714](https://github.com/vincenthsh/gamma/commit/38e2714b5c8652422c1b02737c657a37ac3f6976))
+
 ## [1.3.0](https://github.com/vincenthsh/gamma/compare/v1.2.2...v1.3.0) (2024-05-11)
 
 

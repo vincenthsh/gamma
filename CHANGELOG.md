@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/vincenthsh/gamma/compare/v1.4.0...v1.4.1) (2024-05-15)
+
+
+### Bug Fixes
+
+* Change detection for composite actions ([4a767ab](https://github.com/vincenthsh/gamma/commit/4a767ab81dddd46b37db7d8a3139167e3db4a805))
+
 ## [1.4.0](https://github.com/vincenthsh/gamma/compare/v1.3.0...v1.4.0) (2024-05-15)
 
 

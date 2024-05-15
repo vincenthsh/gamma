@@ -1,7 +1,6 @@
 package checkversions
 
 import (
-	"os"
 	"strings"
 	"time"
 
@@ -21,27 +20,17 @@ var workspaceManifest string
 var Command = &cobra.Command{
 	Use:   "check-versions",
 	Short: "Check versions of changed actions in the monorepo",
-	Long:  `Finds all changed actions and verifies no tag exists for their current version.`,
+	Long:  `Finds all changed actions and verifies their current version has no existing tag.`,
 	Run: func(_ *cobra.Command, _ []string) {
 		started := time.Now()
 
-		if workingDirectory == "the current working directory" { // this is the default value from the flag
-			wd, err := os.Getwd()
-			if err != nil {
-				logger.Fatalf("could not get current working directory: %v", err)
-			}
-
-			workingDirectory = wd
-		}
-
-		// TODO: clean this up
-		outputDirectory := "build" // ignored
-		wd, od, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
+		workingDirectory = utils.FetchWorkingDirectory(workingDirectory)
+		wda, err := utils.NormalizeDirectories(workingDirectory)
 		if err != nil {
 			logger.Fatal(err)
 		}
 
-		repo, err := git.New(wd)
+		repo, err := git.New(wda[0])
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -55,8 +44,10 @@ var Command = &cobra.Command{
 
 		logger.Infof("files changed [%s]", strings.Join(changed, ", "))
 
-		ws := workspace.New(wd, od, workspaceManifest)
-
+		ws := workspace.New(workspace.Properties{
+			WorkingDirectory:  wda[0],
+			WorkspaceManifest: workspaceManifest,
+		})
 		logger.Info("collecting actions")
 
 		actions, err := ws.CollectActions()

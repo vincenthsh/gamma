@@ -24,19 +24,13 @@ var Command = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		started := time.Now()
 
-		if workingDirectory == "the current working directory" { // this is the default value from the flag
-			wd, err := os.Getwd()
-			if err != nil {
-				logger.Fatalf("could not get current working directory: %v", err)
-			}
+		workingDirectory = utils.FetchWorkingDirectory(workingDirectory)
 
-			workingDirectory = wd
-		}
-
-		wd, od, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
+		nd, err := utils.NormalizeDirectories(workingDirectory, outputDirectory)
 		if err != nil {
 			logger.Fatal(err)
 		}
+		wd, od := nd[0], nd[1]
 
 		if err := os.RemoveAll(od); err != nil {
 			logger.Fatalf("could not remove output directory: %v", err)
@@ -46,7 +40,11 @@ var Command = &cobra.Command{
 			logger.Fatalf("could not create output directory: %v", err)
 		}
 
-		ws := workspace.New(wd, od, workspaceManifest)
+		ws := workspace.New(workspace.Properties{
+			WorkingDirectory:  wd,
+			OutputDirectory:   od,
+			WorkspaceManifest: workspaceManifest,
+		})
 
 		logger.Info("collecting actions")
 

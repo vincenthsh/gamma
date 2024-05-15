@@ -71,6 +71,8 @@ func (w *workspace) CollectActions() ([]action.Action, error) {
 		for _, a := range workspaceManifest.Actions {
 			outputDirectory := path.Join(w.outputDirectory, a.Name)
 
+			// Create a new instance of 'a' that is scoped to this loop iteration.
+			a := a
 			config := &action.Config{
 				Name:             a.Name,
 				WorkingDirectory: w.workingDirectory,
@@ -96,19 +98,14 @@ func (w *workspace) readRootPackage() (*node.PackageInfo, error) {
 	return w.packages.ReadPackageInfo(p)
 }
 
-// Gamma specific workspace manifest for non javascript actions
-type workspaceManifest struct {
-	Actions []schema.ActionConfig `yaml:"actions"`
-}
-
 // readWorkspaceManifest if it exists
-func (w *workspace) readWorkspaceManifest() (*workspaceManifest, error) {
+func (w *workspace) readWorkspaceManifest() (*schema.WorkspaceManifest, error) {
 	file, err := os.ReadFile(path.Join(w.workingDirectory, w.workspaceManifest))
 	if err != nil {
 		// ignore if file doesn't exist
 		return nil, nil
 	}
-	var config workspaceManifest
+	var config schema.WorkspaceManifest
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal yaml: %v", err)

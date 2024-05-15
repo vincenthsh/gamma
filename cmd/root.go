@@ -6,6 +6,7 @@ import (
 	"github.com/gravitational/gamma/cmd/build"
 	"github.com/gravitational/gamma/cmd/checkversions"
 	"github.com/gravitational/gamma/cmd/deploy"
+	"github.com/gravitational/gamma/cmd/merge"
 	"github.com/gravitational/gamma/internal/color"
 )
 
@@ -34,6 +35,7 @@ func init() {
 
 	rootCmd.AddCommand(build.Command)
 	rootCmd.AddCommand(checkversions.Command)
+	rootCmd.AddCommand(merge.Command)
 	rootCmd.AddCommand(deploy.Command)
 
 	rootCmd.SetHelpTemplate(`{{ logo }}
@@ -82,6 +84,8 @@ func colorize(s, name string) string {
 		return color.Purple(name)
 	case deploy.Command.Name():
 		return color.Teal(name)
+	case merge.Command.Name():
+		return color.Magenta(name)
 	case "help":
 		return color.Purple(name)
 	case "completion":
@@ -99,6 +103,8 @@ func emoji(s string) string {
 		return "🔍"
 	case deploy.Command.Name():
 		return "🚀"
+	case merge.Command.Name():
+		return "🧪"
 	case "help":
 		return "❓"
 	case "completion":

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/vincenthsh/gamma/compare/v1.4.1...v1.4.2) (2024-06-19)
+
+
+### Bug Fixes
+
+* Autocomplete fatal error on non-action libraries ([4d1e9ce](https://github.com/vincenthsh/gamma/commit/4d1e9ce1be58363d9cd75c1ebbbd167aec5d909a))
+
 ## [1.4.1](https://github.com/vincenthsh/gamma/compare/v1.4.0...v1.4.1) (2024-05-15)
 
 

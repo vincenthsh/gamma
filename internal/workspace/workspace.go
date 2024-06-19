@@ -6,13 +6,14 @@ import (
 	"path"
 
 	"github.com/gravitational/gamma/internal/action"
+	"github.com/gravitational/gamma/internal/logger"
 	"github.com/gravitational/gamma/internal/node"
 	"github.com/gravitational/gamma/pkg/schema"
 	"gopkg.in/yaml.v3"
 )
 
 type Workspace interface {
-	CollectActions() ([]action.Action, error)
+	CollectActions(verbose bool) ([]action.Action, error)
 }
 
 type workspace struct {
@@ -44,7 +45,7 @@ func New(props Properties) Workspace {
 	}
 }
 
-func (w *workspace) CollectActions() ([]action.Action, error) {
+func (w *workspace) CollectActions(verbose bool) ([]action.Action, error) {
 	// TODO: don't error if rootPackage doesn't exist
 	rootPackage, err := w.readRootPackage()
 	if err != nil {
@@ -69,7 +70,11 @@ func (w *workspace) CollectActions() ([]action.Action, error) {
 
 		action, err := action.New(config)
 		if err != nil {
-			return nil, err
+			if verbose {
+				logger.Warningf("Skipping action %s: %v\n", ws.Name, err)
+			}
+			// return nil, err
+			continue
 		}
 
 		actions = append(actions, action)

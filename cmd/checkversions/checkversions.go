@@ -50,7 +50,7 @@ var Command = &cobra.Command{
 		})
 		logger.Info("collecting actions")
 
-		actions, err := ws.CollectActions()
+		actions, err := ws.CollectActions(true)
 		if err != nil {
 			logger.Fatal(err)
 		}

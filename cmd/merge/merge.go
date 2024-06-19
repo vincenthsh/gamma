@@ -2,6 +2,7 @@ package merge
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -51,6 +52,10 @@ func init() {
 	Command.Flags().StringVarP(&workingDirectory, "directory", "d", "the current working directory", "directory containing the monorepo of actions")
 	Command.Flags().StringVarP(&workspaceManifest, "workspace", "w", "gamma-workspace.yml", "workspace manifest for non-javascript actions")
 
+	if _, err := os.Stat(workspaceManifest); os.IsNotExist(err) {
+		return
+	}
+
 	workingDirectory = utils.FetchWorkingDirectory(workingDirectory)
 	wdArr, err := utils.NormalizeDirectories(workingDirectory)
 	if err != nil {
@@ -61,7 +66,7 @@ func init() {
 		WorkspaceManifest: workspaceManifest,
 	})
 
-	actions, err := ws.CollectActions()
+	actions, err := ws.CollectActions(false)
 	if err != nil {
 		logger.Fatal(err)
 	}

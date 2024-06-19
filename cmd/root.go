@@ -6,6 +6,7 @@ import (
 	"github.com/gravitational/gamma/cmd/build"
 	"github.com/gravitational/gamma/cmd/checkversions"
 	"github.com/gravitational/gamma/cmd/deploy"
+	"github.com/gravitational/gamma/cmd/list"
 	"github.com/gravitational/gamma/cmd/merge"
 	"github.com/gravitational/gamma/internal/color"
 )
@@ -34,6 +35,7 @@ func init() {
 	cobra.AddTemplateFunc("logo", logo)
 
 	rootCmd.AddCommand(build.Command)
+	rootCmd.AddCommand(list.Command)
 	rootCmd.AddCommand(checkversions.Command)
 	rootCmd.AddCommand(merge.Command)
 	rootCmd.AddCommand(deploy.Command)
@@ -80,6 +82,8 @@ func colorize(s, name string) string {
 	switch s {
 	case build.Command.Name():
 		return color.Magenta(name)
+	case list.Command.Name():
+		return color.Purple(name)
 	case checkversions.Command.Name():
 		return color.Purple(name)
 	case deploy.Command.Name():
@@ -99,6 +103,8 @@ func emoji(s string) string {
 	switch s {
 	case build.Command.Name():
 		return "🔧"
+	case list.Command.Name():
+		return "🔍"
 	case checkversions.Command.Name():
 		return "🔍"
 	case deploy.Command.Name():

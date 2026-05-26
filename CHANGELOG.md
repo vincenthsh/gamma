@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/vincenthsh/gamma/compare/v1.4.2...v1.5.0) (2026-05-26)
+
+
+### Features
+
+* support node22 and node24 runtimes in runs.using validation ([3fc0059](https://github.com/vincenthsh/gamma/commit/3fc005942c8ec92bf1b34438e96b81289c2b02bc))
+
 ## [1.4.2](https://github.com/vincenthsh/gamma/compare/v1.4.1...v1.4.2) (2024-06-19)
 
 

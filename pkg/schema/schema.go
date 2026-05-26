@@ -167,7 +167,7 @@ func (r *Runs) UnmarshalYAML(value *yaml.Node) error {
 
 		return nil
 
-	case "node12", "node16", "node20":
+	case "node12", "node16", "node20", "node22", "node24":
 		var javascriptRun JavascriptRun
 
 		if err := value.Decode(&javascriptRun); err != nil {
@@ -179,5 +179,5 @@ func (r *Runs) UnmarshalYAML(value *yaml.Node) error {
 		return nil
 	}
 
-	return fmt.Errorf("unsupported runs.using value: %v, expected composite, docker, node12 or node16", obj.Using)
+	return fmt.Errorf("unsupported runs.using value: %v, expected composite, docker, node12, node16, node20, node22 or node24", obj.Using)
 }
